@@ -1,0 +1,15 @@
+pipeline {
+    agent any
+    parameters {
+        string(name: 'TAG', defaultValue: 'smoke', description: 'Tag for test execution')
+    }
+    stages { 
+        stage('run-tests') {
+            steps {
+                script {
+                    sh "docker run --rm --name test mtararujs/ubuntu_ruby_executor"
+                } 
+            }
+        }
+    }
+}

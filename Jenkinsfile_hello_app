@@ -1,0 +1,81 @@
+pipeline {
+    agent any
+    triggers { 
+        pollSCM('*/1 * * * *') 
+    }
+    stages { 
+        stage('build') {
+            steps {
+                echo "Building node application"
+            }
+        }
+        stage('deploy-dev') {
+            steps {
+                script{
+                    deploy("dev")
+                }
+            }
+        }
+        stage('test-dev') {
+            steps {
+                script{
+                    test("dev")
+                }
+            }
+        }
+        stage('deploy-int') {
+            steps {
+                script{
+                    deploy("int")
+                }
+            }
+        }
+        stage('test-int') {
+            steps {
+                script{
+                    test("int")
+                }
+            }
+        }
+        stage('deploy-prd') {
+            steps {
+                script{
+                    deploy("prd")
+                }
+            }
+        }
+        stage('test-prd') {
+            steps {
+                script{
+                    test("prd")
+                }
+            }
+        }
+    }
+}
+
+def deploy(String environment){
+    echo "Deployment to ${environment} triggered.."
+    build job: "ui-tests", parameters: [string(name: "ENVIRONMENT", value: "${environment}")]
+}
+
+def test(String environment){
+    echo "Running tests to ${environment}.."
+    sh "docker run --network=host -d -t --name api_test_executor_${environment} api_test_executor:latest"
+    try{
+        sh "docker exec api_test_executor_${environment} cucumber --tags=@${environment} --format html --out test-output/report.html"
+    }
+    finally{
+        sh "docker cp api_test_executor_${environment}:/usr/src/api-tests/test-output/report.html report_${environment}.html"
+        sh "docker rm -f api_test_executor_${environment}"
+        publishHTML([
+            allowMissing: false, 
+            alwaysLinkToLastBuild: false, 
+            keepAll: false, 
+            reportDir: '', 
+            reportFiles: "report_${environment}.html", 
+            reportName: "Test Report ${environment}", 
+            reportTitles: ''
+        ])
+    }
+}
