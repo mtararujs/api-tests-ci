@@ -1,0 +1,26 @@
+pipeline {
+    agent any
+    parameters {
+        string(name: 'ENVIRONMENT', defaultValue: 'DEV', description: 'Environment for test execution')
+    }
+    stages { 
+        stage('run-tests') {
+            parallel{
+                stage('run-tests-dev') {
+                    steps {
+                        script {
+                            sh "docker run --rm --name test --entrypoint=cucumber mtararujs/ubuntu_ruby_executor PLATFORM=DEV}"
+                        } 
+                    }
+                }
+                stage('run-tests-prd') {
+                    steps {
+                        script {
+                            sh "docker run --rm --name test --entrypoint=cucumber mtararujs/ubuntu_ruby_executor PLATFORM=PRD}"
+                        } 
+                    }
+                }
+            }    
+        }
+    }
+}
