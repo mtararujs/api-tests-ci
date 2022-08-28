@@ -3,17 +3,20 @@ pipeline {
     triggers {
         cron('*/15 * * * *')
     }
+    parameters {
+        string(name: 'TAG', defaultValue: '@smoke', description: 'Tag for test config')
+    }
     stages {
         stage('run-api-tests') {
             parallel{
                 stage('run-api-tests-dev'){
                     steps{
-                        sh "docker run --network=host --rm --name api_dev_tests --entrypoint=cucumber mtararujs/ubuntu_ruby_executor:latest PLATFORM=DEV"
+                        sh "docker run --network=host --rm --name api_dev_tests --entrypoint=cucumber mtararujs/ubuntu_ruby_executor:latest PLATFORM=DEV --tags=${params.TAG}"
                     }
                 }
                 stage('run-api-tests-prd'){
                     steps{
-                        sh "docker run --network=host --rm --name api_prd_tests --entrypoint=cucumber mtararujs/ubuntu_ruby_executor:latest PLATFORM=PRD"
+                        sh "docker run --network=host --rm --name api_prd_tests --entrypoint=cucumber mtararujs/ubuntu_ruby_executor:latest PLATFORM=PRD --tags=${params.TAG}"
                     }
                 }
             }
